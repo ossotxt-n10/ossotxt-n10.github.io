@@ -1,40 +1,635 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Project</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #202938;
-    }
-    main {
-      max-width: 720px;
-      margin: 100px auto;
-      padding: 32px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 42px;
-    }
-    p {
-      font-size: 18px;
-      line-height: 1.7;
-    }
-    a {
-      color: #2459d3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>Chat Bot</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #e4e9ed;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            max-height: 750px;
+
+            background: white;
+            display: flex;
+            flex-direction: column;
+
+            border-radius: 12px;
+            overflow: hidden;
+
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            background: #0b0d0f;
+            color: white;
+            padding: 20px;
+
+            font-size: 20px;
+            font-weight: bold;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .clear-chat-btn {
+            background: transparent;
+            border: none;
+            color: white;
+
+            font-size: 18px;
+            line-height: 1;
+
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            opacity: 0.9;
+            transition: background 0.15s ease, opacity 0.15s ease;
+        }
+
+        .clear-chat-btn:hover {
+            background: rgba(255,255,255,0.15);
+            opacity: 1;
+        }
+
+        .clear-chat-btn svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+
+            overflow-y: auto;
+            background: #d6d6d6;
+
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+
+            max-width: 85%;
+            line-height: 1.5;
+
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+
+            animation: messageIn 0.2s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            background: #fcfcfc;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background: #0b0d0f;
+            color: #fcfcfc;
+            align-self: flex-end;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 16px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a9b3bd;
+            animation: typingBounce 1.3s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .number-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            padding: 15px;
+            background: #fcfcfc; 
+        }
+
+        .number-buttons button {
+            background: #0b0d0f;
+            color: white;
+
+            border: none;
+            border-radius: 8px;
+
+            padding: 12px 18px;
+            font-size: 16px;
+
+            cursor: pointer;
+        }
+
+        .number-buttons button:hover {
+            background: #1768a8;
+        }
+
+        .number-buttons button:disabled,
+        .chat-input input:disabled,
+        .chat-input button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+            background: #fcfcfc
+        }
+
+        .chat-input input {
+            flex: 1;
+            min-width: 0;
+
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+
+            font-size: 16px;
+            background: #fcfcfc;
+        }
+
+        .chat-input button {
+            background: #0b0d0f;
+            color: white;
+
+            border: none;
+            border-radius: 8px;
+
+            padding: 12px 18px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 500px) {
+            .chat-container {
+                height: 100dvh;
+                max-height: none;
+                border-radius: 0;
+            }
+        }
+
+        
+        /* Risposta del bot con avatar */
+        .bot-message-with-avatar {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            align-self: flex-start;
+            max-width: 90%;
+        }
+
+        /* Piccola immagine a sinistra */
+        .bot-avatar {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        /* Fumetto del messaggio */
+        .bot-message-with-avatar .bot-message {
+            max-width: 90%;
+            min-width: 0;
+        }
+
+    </style>
 </head>
+
 <body>
-  <main>
-    <h1>Welcome to My Project</h1>
-    <p>This is the official website for my project.</p>
-    <p>More information coming soon.</p>
-  </main>
+
+<div class="chat-container">
+
+    <div class="chat-header">
+        <span>OssoTxt Bot</span>
+        <button
+            type="button"
+            class="clear-chat-btn"
+            id="clearChatBtn"
+            title="Cancella chat"
+            aria-label="Cancella chat"
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="chat-messages" id="messages"></div>
+
+    <div class="number-buttons">
+        <button onclick="sendMessage('1')">1</button>
+        <button onclick="sendMessage('2')">2</button>
+        <button onclick="sendMessage('3')">3</button>
+        <button onclick="sendMessage('4')">4</button>
+        <button onclick="sendMessage('5')">5</button>
+    </div>
+
+    <form class="chat-input" id="chatForm">
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Scrivi un messaggio..."
+            autocomplete="off"
+            aria-label="Messaggio"
+        >
+
+        <button type="submit">Invia</button>
+    </form>
+
+</div>
+
+<script>
+
+    // Texts
+
+    const text1 = `C’è chi dentro la mente si sente straziato 
+perché è grave che il mare fiero, i lecci tenaci, 
+il cigolio delle auto, il ragionare delle persone, 
+tutto, tutto racconti di cose sparite 
+che nessuno più attende. 
+C’è chi ne soffre sebbene soffrire non serva. 
+
+Franco Fortini, Paesaggio con serpente, Lo spazio…`
+
+    const text2 = `Vorrei con te passeggiare, un giorno di primavera, col cielo di color grigio e ancora qualche vecchia foglia dell’anno prima trascinata per le strade dal vento, nei quartieri della periferia; e che fosse domenica. In tali contrade sorgono spesso pensieri malinconici e grandi; e in date ore vaga la poesia, congiungendo i cuori di quelli che si vogliono bene. Nascono inoltre speranze che non si sanno dire, favorite dagli orizzonti sterminati dietro le case, dai treni fuggenti, dalle nuvole del settentrione. Ci terremo semplicemente per mano e andremo con passo leggero, dicendo cose insensate, stupide e care. Fino a che si accenderanno i lampioni e dai casamenti squallidi usciranno le storie sinistre delle città, le avventure, i vagheggiati romanzi. E allora noi taceremo sempre tenendoci per mano, poiché le anime si parleranno senza parola. Ma tu — adesso mi ricordo — mai mi dicesti cose insensate, stupide e care. Né puoi quindi amare quelle domeniche che dico, né l’anima tua sa parlare alla mia in silenzio, né riconosci all’ora giusta l’incantesimo delle città, né le speranze che scendono dal settentrione. Tu preferisci le luci, la folla, gli uomini che ti guardano, le vie dove dicono si possa incontrar la fortuna. Tu sei diversa da me e se venissi quel giorno a passeggiare, ti lamenteresti di essere stanca; solo questo e nient’altro. 
+
+Dino Buzzati, La boutique del mistero, Inviti superflui.`
+
+
+    const text3 = `Da piccolo ero un ragazzino di merda... Mi sentivo sempre triste e solo...
+E ora, da adulto... mi rendo conto che quei giorni erano comunque migliori...
+Anche se non giocavo ai videogiochi o facevo molto sport... dormivo davvero benissimo... Quei giorni in cui la scuola veniva chiusa... Quei giorni di scuola...
+Ridevo delle persone che ascoltavano Ye Kagaz Ki Kashti e si mettevano a piangere... Ora invece io stesso non riesco ad ascoltare tutta quella canzone senza versare una lacrima.
+Fuck, man.
+Vorrei poter dire a ogni bambino di non confrontare la propria infanzia con quella degli altri, perché alla fine non ha importanza... L'infanzia non torna mai... Vivila... Fuck.
+
+Utente di Reddit, r/India.`
+
+    const text4 = `Faccio un gioco in cui cammino, su per Lady Margaret Road. Sono ancora dentro, quando gli occhi mettono a fuoco. Ecco le mura del giardino. Ecco gli alberi più spogli. Fedele al mio passo ma abituata alle foglie e al tintinnante scavalcare che suggeriscono. Avanti e basta. Nient’altro. Dalla coscia all’anca le gambe si fan strada nella notte lieve, o alle prime luci del giorno, non c’è altro nel mio corpo al di là del suo muovermi. Averlo schivato, semplicemente. Andare fin quassù. Testimoni tutte le finestre da cui mi nascondo nel mio cappotto rosso. Nei miei stivali neri. Valgono il mio attraversare sirene e pioggia. Mi torturano di comodità in questi fine settimana da sola; zampillano splendore sulla superficie opaca di questa vita spasimante che sta diventando vissuta in solitario. Perché sono. Perché non sono. Dov’è peraltro la strada per potere? Non sono persa. O non troppo persa. Sola. Ecco cosa sono e non so cosa fare.
+
+Eimear McBride, Bohémien minori.`
+
+    const text5 = `Ultima frase: quando ho perso ogni cosa in mano mi resta soltanto la vita. Ma dentro una vita tanto grande, come farò io a ritrovarti?
+
+Asli Erdoğan, Tutte le ore e nessuna.`
+
+
+    const outputs = {
+        "1": text1,
+
+        "2": text2,
+
+        "3": text3,
+
+        "4": text4,
+
+        "5": text5
+    };
+
+
+    const numberWords = {
+        "uno": "1",
+        "due": "2",
+        "tre": "3",
+        "quattro": "4",
+        "cinque": "5"
+    };
+
+    const numberImages = {
+    "1": "avatar/01_Avatar_Franco Fortini.png",
+    "2": "avatar/02_Avatar_Dino Buzzati.png",
+    "3": "avatar/03_Avatar_REDDIT.png",
+    "4": "avatar/04_Avatar_Eimear McBride.png",
+    "5": "avatar/05_Avatar_Asli Erdogan.png"
+    };
+
+    const imageWords = {
+        "OSSO": "img/LOGO1.jpg",
+        "osso": "img/LOGO2.jpg",
+        "oSSo": "img/LOGO3.jpg"
+    };
+
+    const randomImages = [
+        "img/LOGO1.jpg",
+        "img/LOGO2.jpg",
+        "img/LOGO3.jpg"
+    ];
+
+
+
+    const messages = document.getElementById("messages");
+
+    const input = document.getElementById("messageInput");
+
+    const numberButtons = document.querySelectorAll(".number-buttons button");
+
+    const sendButton = document.querySelector(".chat-input button");
+
+    let isTyping = false;
+
+
+    // Add a message to the chat.
+
+    function addMessage(text, sender) {
+
+        const message = document.createElement("div");
+
+        message.classList.add("message");
+
+        message.classList.add(
+            sender === "bot" ? "bot-message" : "user-message"
+        );
+
+        message.textContent = text;
+
+        messages.appendChild(message);
+
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+
+    function addMessageWithAvatar(text, imagePath) {
+
+        const container = document.createElement("div");
+        container.classList.add("bot-message-with-avatar");
+
+        const avatar = document.createElement("img");
+        avatar.src = imagePath;
+        avatar.alt = "Avatar";
+        avatar.classList.add("bot-avatar");
+
+        const message = document.createElement("div");
+        message.classList.add("message", "bot-message");
+        message.textContent = text;
+
+        container.appendChild(avatar);
+        container.appendChild(message);
+
+        messages.appendChild(container);
+
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+
+
+    function addImage(imagePath, sender) {
+
+        const message = document.createElement("div");
+
+        message.classList.add(
+            "message",
+            sender === "bot" ? "bot-message" : "user-message"
+        );
+
+        const image = document.createElement("img");
+
+        image.src = imagePath;
+        image.alt = "Immagine";
+        image.style.maxWidth = "100%";
+        image.style.height = "auto";
+        image.style.borderRadius = "8px";
+        image.style.display = "block";
+
+        message.appendChild(image);
+        messages.appendChild(message);
+
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+
+
+
+    // Show the animated "typing..." bubble.
+
+    function showTyping() {
+
+        const typingEl = document.createElement("div");
+
+        typingEl.classList.add("message", "bot-message", "typing-indicator");
+
+        typingEl.id = "typingIndicator";
+
+        typingEl.innerHTML = "<span></span><span></span><span></span>";
+
+        messages.appendChild(typingEl);
+
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+
+    // Remove the "typing..." bubble.
+
+    function removeTyping() {
+
+        const typingEl = document.getElementById("typingIndicator");
+
+        if (typingEl) {
+            typingEl.remove();
+        }
+    }
+
+
+    // Enable/disable inputs while the bot is "typing".
+
+    function setInputsEnabled(enabled) {
+
+        input.disabled = !enabled;
+
+        sendButton.disabled = !enabled;
+
+        numberButtons.forEach(btn => btn.disabled = !enabled);
+    }
+
+
+    // Process a message from the user.
+
+    function sendMessage(value) {
+
+        if (isTyping) {
+            return;
+        }
+
+        const selectedOption = value.trim();
+
+        if (!selectedOption) {
+            return;
+        }
+
+        // Display the user's message.
+        addMessage(selectedOption, "user");
+
+        // Clear the input.
+        input.value = "";
+
+        // Show the typing animation, then reveal the response.
+        isTyping = true;
+
+        setInputsEnabled(false);
+
+        showTyping();
+
+        const delay = 700 + Math.random() * 600;
+
+        setTimeout(function() {
+
+            removeTyping();
+
+            const normalizedInput = selectedOption.toLowerCase();
+
+            const number = numberWords[normalizedInput] || normalizedInput;
+
+            if (outputs[number]) {
+
+                addMessageWithAvatar(
+                    outputs[number],
+                    numberImages[number]
+                );
+
+
+            } else if (normalizedInput === "osso") {
+
+                let selectedImage;
+
+                if (imageWords[selectedOption]) {
+
+                    // Corrispondenza esatta: rispetta maiuscole e minuscole
+                    selectedImage = imageWords[selectedOption];
+
+                } else {
+
+                    // Altre combinazioni: immagine casuale
+                    const randomIndex = Math.floor(
+                        Math.random() * randomImages.length
+                    );
+
+                    selectedImage = randomImages[randomIndex];
+                }
+
+                addImage(selectedImage, "bot");
+
+            } else {
+
+
+                addMessage("Scegli un numero da 1 a 5.", "bot");
+
+            }
+
+
+            isTyping = false;
+
+            setInputsEnabled(true);
+
+            input.focus();
+
+        }, delay);
+    }
+
+
+    // Clear the whole chat and start over.
+
+    function clearChat() {
+
+        const confirmed = window.confirm("Vuoi davvero cancellare tutta la chat?");
+
+        if (!confirmed) {
+            return;
+        }
+
+        removeTyping();
+
+        isTyping = false;
+
+        setInputsEnabled(true);
+
+        messages.innerHTML = "";
+
+        addMessage("Scegli un numero da 1 a 5.", "bot");
+    }
+
+
+    // Process typed messages.
+
+    document.getElementById("chatForm").addEventListener(
+        "submit",
+        function(event) {
+
+            event.preventDefault();
+
+            sendMessage(input.value);
+        }
+    );
+
+
+    // Clear chat button.
+
+    document.getElementById("clearChatBtn").addEventListener(
+        "click",
+        clearChat
+    );
+
+
+    // Initial message when the website opens.
+
+    addMessage("Eccoti. Sei nel chatbot di OSSO. \n\nScegli un numero da 1 a 5.", "bot");
+
+</script>
+
 </body>
 </html>
